@@ -13,6 +13,7 @@ package com.mulesoft.ion.client;
 import com.mulesoft.ion.client.ApplicationStatusChange.ApplicationStatus;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
+import com.sun.jersey.api.client.WebResource;
 
 import java.io.File;
 import java.util.Collections;
@@ -167,23 +168,26 @@ public class DomainConnection extends Connection {
     }
 
     public final void stop() {
-        ClientResponse response = createApplicationBuilder("status/").post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.stop));
+        ClientResponse response = createApplicationBuilder("status/").type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.stop));
         handleErrors(response);
     }
     
 
     public final void start(Long maxWaitTime) {
-        ClientResponse response = createApplicationBuilder("status/").post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.start));
+        ClientResponse response = createApplicationBuilder("status/").type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.start));
         handleErrors(response);
         
         waitForStart(maxWaitTime);
     }
 
     public void delete() {
-        ClientResponse response = createApplicationBuilder("").delete(ClientResponse.class);
+        ClientResponse response = createApplicationBuilder("").type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
         handleErrors(response);
     }
-    
+
+    protected final WebResource.Builder createApplicationBuilder(final String path) {
+        return createBuilder("applications/" + domain + "/" + path);
+    }
     
 
 }

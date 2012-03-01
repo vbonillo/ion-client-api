@@ -105,16 +105,12 @@ public class Connection {
         }
     }
 
-    protected final WebResource.Builder createApplicationBuilder(final String path) {
-        return createBuilder("applications/" + path);
-    }
-
     /**
      * @return true if provided connection details allow to connect; false otherwise
      */
     public final boolean test() {
         try {
-            createApplicationBuilder("").get(Object.class);
+            createBuilder("applications/").get(Object.class);
             return true;
         } catch (Exception e) {
             return false;
