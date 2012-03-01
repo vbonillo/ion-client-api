@@ -69,7 +69,7 @@ public class DomainConnection extends Connection {
         }
     }
 
-    protected final void updateIONApplication(final String domain, final Application application) {
+    public final void update(final Application application) {
         final ClientResponse response = createApplicationBuilder(domain).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class, application);
         
         handleErrors(response);
@@ -121,7 +121,7 @@ public class DomainConnection extends Connection {
                 }
 
                 if (updated) {
-                    updateIONApplication(getDomain(), application);
+                    update(application);
                 }
 
                 //Push new app
@@ -187,6 +187,13 @@ public class DomainConnection extends Connection {
 
     protected final WebResource.Builder createApplicationBuilder(final String path) {
         return createBuilder("applications/" + domain + "/" + path);
+    }
+
+    public Application get() {
+        ClientResponse response = createApplicationBuilder("").get(ClientResponse.class);
+        handleErrors(response);
+        
+        return response.getEntity(Application.class);
     }
     
 
