@@ -1,37 +1,34 @@
-/**
- * This software is licensed under the Apache 2 license, quoted below.
+/*
+ * $Id$
+ * --------------------------------------------------------------------------------------
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
- * Copyright 2010 Julien Eluard
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- *     [http://www.apache.org/licenses/LICENSE-2.0]
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
  */
 
 package com.mulesoft.ion.client;
 
+import com.mulesoft.ion.client.Notification.Priority;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.core.util.Base64;
 
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
 /**
  * Base class for ION interaction.
@@ -43,27 +40,39 @@ public class Connection {
     private final String url;
     private final String username;
     private final String password;
+    private final String apiToken;
 
     public Connection(final String url, final String username, final String password) {
         if (url == null) {
             throw new IllegalArgumentException("null url");
         }
-        if (username == null) {
-            throw new IllegalArgumentException("null username");
-        }
-        if (password == null) {
-            throw new IllegalArgumentException("null password");
+        
+        apiToken = System.getProperty("ion.api.token");
+        if (apiToken == null) {
+            if (username == null) {
+                throw new IllegalArgumentException("null username");
+            }
+            if (password == null) {
+                throw new IllegalArgumentException("null password");
+            }
         }
 
         //TODO add URL validation
-        this.url = url;
+        if (!url.endsWith("/")) { 
+            this.url = url + "/";
+        } else {
+            this.url = url;
+        }
         this.username = username;
         this.password = password;
 
         //Ensure we have all required parameters
         final ClientConfig clientConfig = new DefaultClientConfig();
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.getClasses().add(JacksonJsonProvider.class);
+        JacksonJsonProvider jsonProvider = new JacksonJsonProvider(new ObjectMapper());
+        clientConfig.getSingletons().add(jsonProvider);
         this.client = Client.create(clientConfig);
+        this.client.addFilter(new LoggingFilter());
     }
 
     protected final String getUrl() {
@@ -82,21 +91,22 @@ public class Connection {
         return new DomainConnection(this, domain);
     }
 
-    protected final String getIONApplicationsResource() {
-        return this.url+"api/applications/";
+    protected final String getAPIURL() {
+        return this.url+"api/";
     }
 
     protected final WebResource.Builder createBuilder(final String path) {
-        final WebResource webResource = this.client.resource(getIONApplicationsResource());
-        return webResource.path(path).header(HttpHeaders.AUTHORIZATION, "Basic "+ new String(Base64.encode(this.username+":"+this.password), Charset.forName("ASCII")));
+        WebResource pathResource = this.client.resource(getAPIURL()).path(path);
+        
+        if (apiToken == null) {
+            return pathResource.header(HttpHeaders.AUTHORIZATION, "Basic "+ new String(Base64.encode(this.username+":"+this.password), Charset.forName("ASCII")));
+        } else {
+            return pathResource.header("X-ION-Authenticate", apiToken);
+        }
     }
 
-    protected final String extractFailureReason(final ClientResponse response) {
-        if (response.getType() != null && response.getType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-            return response.getEntity(Map.class).get("message").toString();
-        } else {
-            return response.getEntity(String.class);
-        }
+    protected final WebResource.Builder createApplicationBuilder(final String path) {
+        return createBuilder("applications/" + path);
     }
 
     /**
@@ -104,7 +114,7 @@ public class Connection {
      */
     public final boolean test() {
         try {
-            createBuilder("").get(Object.class);
+            createApplicationBuilder("").get(Object.class);
             return true;
         } catch (Exception e) {
             return false;
@@ -116,7 +126,49 @@ public class Connection {
      * @return all existing applications
      */
     public final List<Application> list() {
-        return createBuilder("").type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class).getEntity(new GenericType<List<Application>>(){});
+        ClientResponse response = createBuilder("applications/").type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        handleErrors(response);
+        return response.getEntity(new GenericType<List<Application>>(){});
     }
 
+    public void createNotification(String text, Priority priority, String domain) {
+        Notification notification = new Notification();
+        notification.setMessage(text);
+        notification.setDomain(domain);
+        notification.setPriority(priority);
+        
+        ClientResponse response = createBuilder("notifications/")
+            .type(MediaType.APPLICATION_JSON_TYPE)
+            .post(ClientResponse.class, notification);
+        
+        handleErrors(response);
+    }
+
+    protected void handleErrors(ClientResponse response) {
+        if (response.getStatus() == 404) {
+            throw new IonException("That domain was not found.");
+        } else if (response.getStatus() == 401) {
+            throw new IonException("Invalid username or password.");
+        } else if (response.getStatus() == 403) {
+            throw new IonException("You do not have access to perform that action.");
+        } else if (response.getStatus() >= 400) {
+            if (response.getType() != null && response.getType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+                Map responseProps = response.getEntity(Map.class);
+                System.out.println(responseProps);
+                throw new IonException((String)responseProps.get("message"));
+            } else {
+                String text = response.getEntity(String.class);
+                throw new IonException("Error " + response.getStatus() + ". " + text);
+            }
+        }
+    }
+
+    public static class ObjectMapper extends org.codehaus.jackson.map.ObjectMapper {
+
+        public ObjectMapper() {
+            super();
+            getSerializationConfig().setSerializationInclusion(Inclusion.NON_NULL);
+        }
+
+    }
 }

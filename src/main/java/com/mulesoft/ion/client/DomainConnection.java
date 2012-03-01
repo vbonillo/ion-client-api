@@ -1,19 +1,11 @@
-/**
- * This software is licensed under the Apache 2 license, quoted below.
+/*
+ * $Id$
+ * --------------------------------------------------------------------------------------
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
- * Copyright 2010 Julien Eluard
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- *     [http://www.apache.org/licenses/LICENSE-2.0]
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
  */
 
 package com.mulesoft.ion.client;
@@ -51,7 +43,7 @@ public class DomainConnection extends Connection {
     }
 
     protected final Application getIONApplication() {
-        return createBuilder(getDomain()).type(MediaType.APPLICATION_JSON_TYPE).get(Application.class);
+        return createApplicationBuilder(getDomain()).type(MediaType.APPLICATION_JSON_TYPE).get(Application.class);
     }
 
     protected final boolean isIONApplicationCreated(final String domain) {
@@ -74,11 +66,9 @@ public class DomainConnection extends Connection {
     }
 
     protected final void updateIONApplication(final String domain, final Application application) {
-        final ClientResponse response = createBuilder(domain).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class, application);
-        final ClientResponse.Status status = response.getClientResponseStatus();
-        if (!(status == ClientResponse.Status.OK || status == ClientResponse.Status.CREATED)) {
-            throw new RuntimeException("Failed to update <"+domain+">: "+status.getStatusCode()+"("+status.getReasonPhrase()+"): "+extractFailureReason(response));
-        }
+        final ClientResponse response = createApplicationBuilder(domain).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class, application);
+        
+        handleErrors(response);
     }
 
     public final void deploy(final File file) {
@@ -131,10 +121,10 @@ public class DomainConnection extends Connection {
                 }
 
                 //Push new app
-                final ClientResponse.Status status = createBuilder(getDomain()+"/deploy").type(MediaType.APPLICATION_OCTET_STREAM_TYPE).post(ClientResponse.class, file).getClientResponseStatus();
-                if (status != ClientResponse.Status.OK) {
-                    throw new RuntimeException("Failed to deploy <"+getDomain()+">: "+status.getStatusCode()+"("+status.getReasonPhrase()+")");
-                }
+
+                ClientResponse response = createApplicationBuilder(getDomain()+"/deploy").type(MediaType.APPLICATION_OCTET_STREAM_TYPE).post(ClientResponse.class, file);
+                handleErrors(response);
+                
                 break;
             case DEPLOYING:
                 throw new IllegalStateException("Another deployment is in progress");
