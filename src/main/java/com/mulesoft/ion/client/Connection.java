@@ -146,19 +146,19 @@ public class Connection {
 
     protected void handleErrors(ClientResponse response) {
         if (response.getStatus() == 404) {
-            throw new IonException("That domain was not found.");
+            throw new IONException("That domain was not found.");
         } else if (response.getStatus() == 401) {
-            throw new IonException("Invalid username or password.");
+            throw new IONException("Invalid username or password.");
         } else if (response.getStatus() == 403) {
-            throw new IonException("You do not have access to perform that action.");
+            throw new IONException("You do not have access to perform that action.");
         } else if (response.getStatus() >= 400) {
             if (response.getType() != null && response.getType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
                 Map responseProps = response.getEntity(Map.class);
                 System.out.println(responseProps);
-                throw new IonException((String)responseProps.get("message"));
+                throw new IONException((String)responseProps.get("message"));
             } else {
                 String text = response.getEntity(String.class);
-                throw new IonException("Error " + response.getStatus() + ". " + text);
+                throw new IONException("Error " + response.getStatus() + ". " + text);
             }
         }
     }

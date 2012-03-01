@@ -10,6 +10,7 @@
 
 package com.mulesoft.ion.client;
 
+import com.mulesoft.ion.client.ApplicationStatusChange.ApplicationStatus;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 
@@ -43,7 +44,9 @@ public class DomainConnection extends Connection {
     }
 
     protected final Application getIONApplication() {
-        return createApplicationBuilder(getDomain()).type(MediaType.APPLICATION_JSON_TYPE).get(Application.class);
+        ClientResponse response = createApplicationBuilder(getDomain()).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        handleErrors(response);
+        return response.getEntity(Application.class);
     }
 
     protected final boolean isIONApplicationCreated(final String domain) {
@@ -132,6 +135,14 @@ public class DomainConnection extends Connection {
                 throw new IllegalStateException("Unhandled status <"+application.getStatus()+">");
         }
 
+        waitForStart(maxWaitTime);
+    }
+
+    private void waitForStart(final long maxWaitTime) {
+        if (maxWaitTime == 0) {
+            return;
+        }
+        
         final long before = System.currentTimeMillis();
         while (System.currentTimeMillis() - before < maxWaitTime) {
             final Application latestApplication = getIONApplication();
@@ -140,7 +151,7 @@ public class DomainConnection extends Connection {
             switch (status) {
                 case DEPLOY_FAILED:
                     //TODO extract error message
-                    throw new RuntimeException("Failed to deploy <"+file+"> on <"+getDomain()+">");
+                    throw new RuntimeException("Application " + domain + " failed to start.");
                 case STARTED:
                     return;
             }
@@ -155,37 +166,24 @@ public class DomainConnection extends Connection {
         throw new RuntimeException("Waited on <"+getDomain()+"> deployment for <"+maxWaitTime+"> ms");
     }
 
-    public final void undeploy() {
-        undeploy(DomainConnection.DEFAULT_MAX_WAIT_TIME);
+    public final void stop() {
+        ClientResponse response = createApplicationBuilder("status/").post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.stop));
+        handleErrors(response);
+    }
+    
+
+    public final void start(Long maxWaitTime) {
+        ClientResponse response = createApplicationBuilder("status/").post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.start));
+        handleErrors(response);
+        
+        waitForStart(maxWaitTime);
     }
 
-    /**
-     * Undeploy currently deployed application.
-     *
-     * @param maxWaitTime 
-     */
-    public final void undeploy(final long maxWaitTime) {
-        ensureIONApplicationExists(getDomain());
-
-        final Application application = getIONApplication();
-        application.setWorkers(0);
-
-        updateIONApplication(getDomain(), application);
-
-        final long before = System.currentTimeMillis();
-        while (System.currentTimeMillis() - before < maxWaitTime) {
-            if (getIONApplication().getWorkerStatuses().isEmpty()) {
-                return;
-            }
-
-            try {
-                Thread.sleep(1000L);
-            } catch (InterruptedException e) {
-                //Quit loop when interrupted
-                break;
-            }
-        }
-        throw new RuntimeException("Waited on <"+getDomain()+"> undeployment for <"+maxWaitTime+"> ms");
+    public void delete() {
+        ClientResponse response = createApplicationBuilder("").delete(ClientResponse.class);
+        handleErrors(response);
     }
+    
+    
 
 }
