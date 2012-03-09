@@ -9,9 +9,9 @@
  */
 package com.mulesoft.ion.client;
 
-public class IONException extends RuntimeException {
+public class IonException extends RuntimeException {
 
-    public IONException(String message) {
+    public IonException(String message) {
         super(message);
     }
 
