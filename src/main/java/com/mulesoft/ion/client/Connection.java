@@ -34,20 +34,24 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
  * Base class for ION interaction.
  */
 public class Connection {
-
+    
     public static final String DEFAULT_URL = "https://muleion.com/";
     private final Client client;
     private final String url;
     private final String username;
     private final String password;
-    private final String apiToken;
+    private String apiToken;
 
     public Connection(final String url, final String username, final String password) {
         if (url == null) {
             throw new IllegalArgumentException("null url");
         }
         
-        apiToken = System.getProperty("ion.api.token");
+        if (username == null || "".equals(username)) {
+            // only use the apiToken if username isn't set
+            apiToken = System.getProperty("ion.api.token");
+        }
+        
         if (apiToken == null) {
             if (username == null) {
                 throw new IllegalArgumentException("null username");
