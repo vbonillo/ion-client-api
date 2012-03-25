@@ -9,14 +9,28 @@
  */
 package com.mulesoft.ion.client;
 
+import java.util.Date;
+
 public class Notification {
     public enum Priority {
         INFO, ERROR, WARN
     }
 
+    private String id;
     private String message;
     private String domain;
     private Priority priority;
+    private Date createdAt;
+    private Date dismissedOn;
+    private String href;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getMessage() {
         return message;
@@ -40,6 +54,30 @@ public class Notification {
 
     public void setPriority(Priority priority) {
         this.priority = priority;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getDismissedOn() {
+        return dismissedOn;
+    }
+
+    public void setDismissedOn(Date dismissedOn) {
+        this.dismissedOn = dismissedOn;
+    }
+
+    public String getHref() {
+        return href;
+    }
+
+    public void setHref(String href) {
+        this.href = href;
     }
 
 }

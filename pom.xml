@@ -20,6 +20,11 @@
             <artifactId>jersey-json</artifactId>
             <version>${jerseyVersion}</version>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.6.2</version>
+        </dependency>
     </dependencies>
 
     <properties>
