@@ -69,7 +69,7 @@ public class DomainConnection extends Connection {
         }
     }
 
-    public final void update(final Application application) {
+    public final void update(final ApplicationUpdateInfo application) {
         final ClientResponse response = createApplicationBuilder(domain).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class, application);
         
         handleErrors(response);
@@ -91,6 +91,8 @@ public class DomainConnection extends Connection {
         ensureIONApplicationExists(getDomain());
 
         final Application application = getIONApplication();
+        ApplicationUpdateInfo appUdateInfo = new ApplicationUpdateInfo(application); 
+        
         if (!application.getSupportedVersions().contains(muleVersion)) {
             throw new IllegalArgumentException("Requested mule version <"+muleVersion+"> is not one of supported versions <"+application.getSupportedVersions()+">");
         }
@@ -104,24 +106,24 @@ public class DomainConnection extends Connection {
                 //Update MetaData
                 boolean updated = false;
                 if (workers != application.getWorkers()) {
-                    application.setWorkers(workers);
+                	appUdateInfo.setWorkers(workers);
                     updated = true;
                 }
                 if (!muleVersion.equals(application.getMuleVersion())) {
-                    application.setMuleVersion(muleVersion);
+                	appUdateInfo.setMuleVersion(muleVersion);
                     updated = true;
                 }
                 if (!file.getName().equals(application.getFilename())) {
-                    application.setFilename(file.getName());
+                	appUdateInfo.setFilename(file.getName());
                     updated = true;
                 }
                 if (properties != null && !properties.equals(application.getProperties())) {
-                    application.setProperties(properties);
+                	appUdateInfo.setProperties(properties);
                     updated = true;
                 }
 
                 if (updated) {
-                    update(application);
+                    update(appUdateInfo);
                 }
 
                 //Push new app
@@ -186,7 +188,8 @@ public class DomainConnection extends Connection {
     }
 
     protected final WebResource.Builder createApplicationBuilder(final String path) {
-        return createBuilder("applications/" + domain + "/" + path);
+    	return createBuilder("applications/" + path);
+        
     }
 
     public Application get() {
