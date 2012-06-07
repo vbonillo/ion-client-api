@@ -170,20 +170,20 @@ public class DomainConnection extends Connection {
     }
 
     public final void stop() {
-        ClientResponse response = createApplicationBuilder("status/").type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.stop));
+        ClientResponse response = createApplicationBuilder(domain + "/status/").type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.stop));
         handleErrors(response);
     }
     
 
     public final void start(Long maxWaitTime) {
-        ClientResponse response = createApplicationBuilder("status/").type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.start));
+        ClientResponse response = createApplicationBuilder(domain + "/status/").type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.start));
         handleErrors(response);
         
         waitForStart(maxWaitTime);
     }
 
     public void delete() {
-        ClientResponse response = createApplicationBuilder("").type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
+        ClientResponse response = createApplicationBuilder(domain).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
         handleErrors(response);
     }
 
@@ -193,7 +193,7 @@ public class DomainConnection extends Connection {
     }
 
     public Application get() {
-        ClientResponse response = createApplicationBuilder("").get(ClientResponse.class);
+        ClientResponse response = createApplicationBuilder(domain).get(ClientResponse.class);
         handleErrors(response);
         
         return response.getEntity(Application.class);
