@@ -15,10 +15,13 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 
+import javax.ws.rs.core.MediaType;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Map;
-import javax.ws.rs.core.MediaType;
 
 /**
  * Extends {@class Connection} by providing domain level operations.
@@ -88,11 +91,31 @@ public class DomainConnection extends Connection {
      * @param maxWaitTime 
      */
     public final void deploy(final File file, final String muleVersion, final int workers, final long maxWaitTime, final Map<String, String> properties) {
+        try {
+            this.deployFromStream(new FileInputStream(file), file.getName(), muleVersion, workers, maxWaitTime, properties);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("File does not exist",e);
+        }
+    }
+
+    /**
+     * Deploy provided application on specified domain based on the InputStream
+     *
+     * @param file
+     * @param muleVersion
+     * @param workers
+     * @param maxWaitTime
+     */
+    public final void deploy(final InputStream file, final String muleVersion, final int workers, final long maxWaitTime, final Map<String, String> properties) {
+        this.deployFromStream(file, getDomain() + ".zip", muleVersion, workers, maxWaitTime,properties);
+    }
+
+    private final void deployFromStream(final InputStream file, String fileName, final String muleVersion, final int workers, final long maxWaitTime, final Map<String, String> properties) {
         ensureIONApplicationExists(getDomain());
 
         final Application application = getIONApplication();
-        ApplicationUpdateInfo appUdateInfo = new ApplicationUpdateInfo(application); 
-        
+        ApplicationUpdateInfo appUdateInfo = new ApplicationUpdateInfo(application);
+
         if (!application.getSupportedVersions().contains(muleVersion)) {
             throw new IllegalArgumentException("Requested mule version <"+muleVersion+"> is not one of supported versions <"+application.getSupportedVersions()+">");
         }
@@ -106,19 +129,19 @@ public class DomainConnection extends Connection {
                 //Update MetaData
                 boolean updated = false;
                 if (workers != application.getWorkers()) {
-                	appUdateInfo.setWorkers(workers);
+                    appUdateInfo.setWorkers(workers);
                     updated = true;
                 }
                 if (!muleVersion.equals(application.getMuleVersion())) {
-                	appUdateInfo.setMuleVersion(muleVersion);
+                    appUdateInfo.setMuleVersion(muleVersion);
                     updated = true;
                 }
-                if (!file.getName().equals(application.getFilename())) {
-                	appUdateInfo.setFilename(file.getName());
+                if (!fileName.equals(application.getFilename())) {
+                    appUdateInfo.setFilename(fileName);
                     updated = true;
                 }
                 if (properties != null && !properties.equals(application.getProperties())) {
-                	appUdateInfo.setProperties(properties);
+                    appUdateInfo.setProperties(properties);
                     updated = true;
                 }
 
@@ -130,7 +153,7 @@ public class DomainConnection extends Connection {
 
                 ClientResponse response = createApplicationBuilder(getDomain()+"/deploy").type(MediaType.APPLICATION_OCTET_STREAM_TYPE).post(ClientResponse.class, file);
                 handleErrors(response);
-                
+
                 break;
             case DEPLOYING:
                 throw new IllegalStateException("Another deployment is in progress");
@@ -140,6 +163,7 @@ public class DomainConnection extends Connection {
 
         waitForStart(maxWaitTime);
     }
+    
 
     private void waitForStart(final long maxWaitTime) {
         if (maxWaitTime == 0) {
