@@ -4,7 +4,7 @@
 
     <groupId>com.mulesoft.ion</groupId>
     <artifactId>ion-client-api</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
 
     <name>iON Client API</name>
     <inceptionYear>2012</inceptionYear>
