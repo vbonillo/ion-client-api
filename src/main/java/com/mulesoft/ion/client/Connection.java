@@ -59,7 +59,11 @@ public class Connection {
         
         if (username == null || "".equals(username)) {
             // only use the apiToken if username isn't set
-            apiToken = System.getProperty("ion.api.token");
+            apiToken = System.getProperty("cloudhub.api.token");
+            
+            if (apiToken == null) {
+            	apiToken = System.getProperty("ion.api.token");
+            }
             logger.debug("Using iON token authentication.");
         } else {
             logger.debug("Using iON username/password authentication because the username is set.");
@@ -183,10 +187,9 @@ public class Connection {
      * @param includeDismissed 
      * @param offset 
      * @param maxResults 
-     * @param domain 
      * @return all existing applications
      */
-    public final NotificationResults listNotifications(String domain, Integer maxResults, Integer offset, Boolean includeDismissed) {
+    public final NotificationResults listNotifications(Integer maxResults, Integer offset) {
         WebResource resource = createResource("/notifications");
         
         if (maxResults != null) {
@@ -197,10 +200,7 @@ public class Connection {
             resource.queryParam("offset", offset.toString());
         }
 
-        if (includeDismissed != null) {
-            resource.queryParam("includeDismissed", includeDismissed.toString());
-        }
-        
+      
         ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
         handleErrors(response);
         return response.getEntity(NotificationResults.class);

@@ -12,23 +12,32 @@ package com.mulesoft.ion.client;
 import java.util.List;
 
 public class NotificationResults {
-    private long total;
-    private List<Notification> notifications;
+    private long unreadCount;
+    private List<Notification> data;
 
     public long getTotal() {
-        return total;
+        if (data == null) {
+        	return 0;
+        }
+        else {
+        	return data.size();
+        }
     }
 
-    public void setTotal(long total) {
-        this.total = total;
+    public List<Notification> getData() {
+        return data;
     }
 
-    public List<Notification> getNotifications() {
-        return notifications;
+    public void setData(List<Notification> notifications) {
+        this.data = notifications;
     }
 
-    public void setNotifications(List<Notification> notifications) {
-        this.notifications = notifications;
-    }
+	public long getUnreadCount() {
+		return unreadCount;
+	}
+
+	public void setUnreadCount(long unreadCount) {
+		this.unreadCount = unreadCount;
+	}
 
 }

@@ -23,6 +23,10 @@ public class Notification {
     private Date createdAt;
     private Date dismissedOn;
     private String href;
+    private String username;
+    private boolean read;
+    private Date readOn;
+       
 
     public String getId() {
         return id;
@@ -79,5 +83,29 @@ public class Notification {
     public void setHref(String href) {
         this.href = href;
     }
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public boolean isRead() {
+		return read;
+	}
+
+	public void setRead(boolean read) {
+		this.read = read;
+	}
+
+	public Date getReadOn() {
+		return readOn;
+	}
+
+	public void setReadOn(Date readOn) {
+		this.readOn = readOn;
+	}
 
 }
