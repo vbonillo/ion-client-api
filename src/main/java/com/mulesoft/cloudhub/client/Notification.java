@@ -10,6 +10,7 @@
 package com.mulesoft.cloudhub.client;
 
 import java.util.Date;
+import java.util.Map;
 
 public class Notification {
     public enum Priority {
@@ -25,7 +26,7 @@ public class Notification {
     private String href;
     private String username;
     private Date readOn;
-       
+    private Map<String, String> customProperties;
 
     public String getId() {
         return id;
@@ -97,6 +98,14 @@ public class Notification {
 
 	public void setReadOn(Date readOn) {
 		this.readOn = readOn;
+	}
+
+	public Map<String, String> getCustomProperties() {
+		return customProperties;
+	}
+
+	public void setCustomProperties(Map<String, String> customProperties) {
+		this.customProperties = customProperties;
 	}
 
 }

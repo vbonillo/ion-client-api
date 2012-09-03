@@ -10,6 +10,19 @@
 
 package com.mulesoft.cloudhub.client;
 
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.codehaus.jackson.map.DeserializationConfig;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.mulesoft.cloudhub.client.Notification.Priority;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -20,20 +33,6 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.core.util.Base64;
-
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
-
-import javax.management.remote.NotificationResult;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Base class for CloudHub interaction.
@@ -161,11 +160,12 @@ public class Connection {
         return response.getEntity(new GenericType<List<Application>>(){});
     }
 
-    public Notification createNotification(String text, Priority priority, String domain) {
+    public Notification createNotification(String text, Priority priority, String domain, Map<String, String> customProperties) {
         Notification notification = new Notification();
         notification.setMessage(text);
         notification.setDomain(domain);
         notification.setPriority(priority);
+        notification.setCustomProperties(customProperties);
         
         ClientResponse response = createBuilder("notifications/")
             .type(MediaType.APPLICATION_JSON_TYPE)
@@ -231,8 +231,10 @@ public class Connection {
             throw new CloudHubException("You do not have access to perform that action.");
         } else if (response.getStatus() >= 400) {
             if (response.getType() != null && response.getType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-                Map responseProps = response.getEntity(Map.class);
-                System.out.println(responseProps);
+                
+            	@SuppressWarnings("unchecked")
+            	Map<String, String> responseProps = response.getEntity(Map.class);
+            	
                 throw new CloudHubException((String)responseProps.get("message"));
             } else {
                 String text = response.getEntity(String.class);
