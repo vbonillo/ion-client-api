@@ -53,7 +53,7 @@
 
     <issueManagement>
         <system>Github</system>
-        <url>http://github.com/jeluard/ion-api/issues</url>
+        <url>http://github.com/mulesoft/ion-client-api/issues</url>
     </issueManagement>
 
     <build>
