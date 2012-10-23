@@ -40,7 +40,7 @@ import com.sun.jersey.core.util.Base64;
 public class Connection {
     private Logger logger = LoggerFactory.getLogger(Connection.class);
     
-    public static final String DEFAULT_URL = "https://muleion.com/";
+    public static final String DEFAULT_URL = "https://cloudhub.io/";
     private final Client client;
     private final String url;
     private final String username;
