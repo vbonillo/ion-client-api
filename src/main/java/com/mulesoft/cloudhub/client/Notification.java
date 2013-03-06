@@ -26,6 +26,8 @@ public class Notification {
     private String href;
     private String username;
     private Date readOn;
+    private String tenantId;
+    private String transactionId;
     private Map<String, String> customProperties;
 
     public String getId() {
@@ -108,4 +110,19 @@ public class Notification {
 		this.customProperties = customProperties;
 	}
 
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
 }
