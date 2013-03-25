@@ -4,7 +4,7 @@
 
     <groupId>com.mulesoft.cloudhub</groupId>
     <artifactId>cloudhub-client-api</artifactId>
-    <version>1.4</version>
+    <version>1.5-SNAPSHOT</version>
 
     <name>CloudHub Client API</name>
     <inceptionYear>2012</inceptionYear>
