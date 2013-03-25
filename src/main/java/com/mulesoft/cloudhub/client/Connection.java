@@ -257,6 +257,116 @@ public class Connection implements CloudhubConnection {
         handleErrors(response);
     };
     
+    /**
+     *{@inheritDoc}
+     */
+    @Override
+    public final TenantResults listTenants(String domain, Integer limit, Integer offset, String query) {
+    	WebResource resource = this.createResource("applications")
+    								.path(domain)
+    								.path("tenants");
+    	
+    	if (limit != null) {
+    		resource = resource.queryParam("limit", limit.toString());
+    	}
+    	
+    	if (offset != null) {
+    		resource = resource.queryParam("offset", offset.toString());
+    	}
+    	
+    	if (query != null) {
+    		resource = resource.queryParam("query", query);
+    	}
+    								
+    	ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+    	this.handleErrors(response);
+    	
+    	return response.getEntity(TenantResults.class);
+    }
+    
+    /**
+     *{@inheritDoc}
+     */
+    @Override
+    public final Tenant getTenant(String domain, String tenantId) {
+    	WebResource resource = this.createResource("applications")
+				.path(domain)
+				.path("tenants")
+				.path(tenantId);
+    	
+    	ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+    	this.handleErrors(response);
+    	
+    	return response.getEntity(Tenant.class);
+    }
+    
+    /**
+     *{@inheritDoc}
+     */
+    @Override
+    public final Tenant create(Tenant tenant, String domain) {
+    	WebResource resource = this.createResource("applications")
+				.path(domain)
+				.path("tenants");
+    	
+    	ClientResponse response = resource.entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class);
+    	this.handleErrors(response);
+    	
+    	return response.getEntity(Tenant.class);
+    }
+    
+    /**
+     *{@inheritDoc}
+     */
+    @Override
+    public final Tenant update(Tenant tenant, String domain) {
+    	WebResource resource = this.createResource("applications")
+				.path(domain)
+				.path("tenants")
+				.path(tenant.getId());
+    	
+    	ClientResponse response = resource.entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class);
+    	this.handleErrors(response);
+    	
+    	return response.getEntity(Tenant.class);
+    }
+    
+    /**
+     *{@inheritDoc}
+     */
+    @Override
+    public final void delete(String tenantId, String domain) {
+    	WebResource resource = this.createResource("applications")
+				.path(domain)
+				.path("tenants")
+				.path(tenantId);
+    	
+    	ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
+    	this.handleErrors(response);
+    }
+    
+    /**
+     *{@inheritDoc}
+     */
+    @Override
+    public void deleteTenants(String domain, List<String> tenantIds) {
+    	if (tenantIds == null || tenantIds.isEmpty()) {
+    		if (logger.isDebugEnabled()) {
+    			logger.warn("tenantIds collection is null or empty. Exiting without doing anything");
+    		}
+    		
+    		return;
+    	}
+    	
+    	WebResource resource = this.createResource("applications")
+				.path(domain)
+				.path("tenants");
+    	
+    	ClientResponse response = resource.entity(tenantIds).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
+    	this.handleErrors(response);
+    }
+    
+    
     protected void handleErrors(ClientResponse response) {
         if (response.getStatus() == 404) {
             throw new CloudHubException("That resource was not found.");

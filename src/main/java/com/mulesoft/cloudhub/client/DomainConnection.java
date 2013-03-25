@@ -80,7 +80,7 @@ public class DomainConnection extends Connection {
     }
 
     public final void deploy(final File file) {
-        deploy(file, DomainConnection.DEFAULT_MULE_VERSION, DomainConnection.DEFAULT_WORKERS, DomainConnection.DEFAULT_MAX_WAIT_TIME, Collections.EMPTY_MAP);
+        deploy(file, DomainConnection.DEFAULT_MULE_VERSION, DomainConnection.DEFAULT_WORKERS, DomainConnection.DEFAULT_MAX_WAIT_TIME, Collections.<String, String>emptyMap());
     }
 
     /**
