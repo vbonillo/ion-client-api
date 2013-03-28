@@ -278,7 +278,7 @@ public class Connection implements CloudhubConnection {
     		resource = resource.queryParam("query", query);
     	}
     								
-    	ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+    	ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
     	this.handleErrors(response);
     	
     	return response.getEntity(TenantResults.class);
@@ -294,7 +294,7 @@ public class Connection implements CloudhubConnection {
 				.path("tenants")
 				.path(tenantId);
     	
-    	ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+    	ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
     	this.handleErrors(response);
     	
     	return response.getEntity(Tenant.class);
@@ -309,7 +309,7 @@ public class Connection implements CloudhubConnection {
 				.path(domain)
 				.path("tenants");
     	
-    	ClientResponse response = resource.entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class);
+    	ClientResponse response = authorizeResource(resource).entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class);
     	this.handleErrors(response);
     	
     	return response.getEntity(Tenant.class);
@@ -325,7 +325,7 @@ public class Connection implements CloudhubConnection {
 				.path("tenants")
 				.path(tenant.getId());
     	
-    	ClientResponse response = resource.entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class);
+    	ClientResponse response = authorizeResource(resource).entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class);
     	this.handleErrors(response);
     	
     	return response.getEntity(Tenant.class);
@@ -341,7 +341,7 @@ public class Connection implements CloudhubConnection {
 				.path("tenants")
 				.path(tenantId);
     	
-    	ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
+    	ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
     	this.handleErrors(response);
     }
     
@@ -362,7 +362,7 @@ public class Connection implements CloudhubConnection {
 				.path(domain)
 				.path("tenants");
     	
-    	ClientResponse response = resource.entity(tenantIds).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
+    	ClientResponse response = authorizeResource(resource).entity(tenantIds).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
     	this.handleErrors(response);
     }
     
