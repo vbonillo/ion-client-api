@@ -21,13 +21,14 @@ import java.util.Map;
  */
 public class Application {
 
-    public enum Status {
+    public static enum Status {
         WAITING_FOR_SERVER,
         DEPLOYING,
         UNDEPLOYING,
         STARTED,
         UNDEPLOYED,
-        DEPLOY_FAILED
+        DEPLOY_FAILED,
+        DELETED
     }
 
     public static class WorkerStatus {
@@ -207,4 +208,25 @@ public class Application {
         this.deploymentUpdateStatus = deploymentUpdateStatus;
     }
 
+    @Override
+    public String toString()
+    {
+        return "Application{" +
+               "description='" + description + '\'' +
+               ", domain='" + domain + '\'' +
+               ", fullDomain='" + fullDomain + '\'' +
+               ", status=" + status +
+               ", hasFile=" + hasFile +
+               ", filename='" + filename + '\'' +
+               ", lastUpdateTime=" + lastUpdateTime +
+               ", workers=" + workers +
+               ", remainingWorkerCount=" + remainingWorkerCount +
+               ", workerStatuses=" + workerStatuses +
+               ", muleVersion='" + muleVersion + '\'' +
+               ", supportedVersions=" + supportedVersions +
+               ", properties=" + properties +
+               ", href='" + href + '\'' +
+               ", deploymentUpdateStatus=" + deploymentUpdateStatus +
+               '}';
+    }
 }

@@ -10,6 +10,10 @@
 
 package com.mulesoft.cloudhub.client;
 
+import com.mulesoft.cloudhub.client.ApplicationStatusChange.ApplicationStatus;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -19,68 +23,86 @@ import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 
-import com.mulesoft.cloudhub.client.ApplicationStatusChange.ApplicationStatus;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
-
 /**
  * Extends {@class Connection} by providing domain level operations.
  */
-public class DomainConnection extends Connection {
+public class DomainConnection extends Connection
+{
 
     public static final String DEFAULT_MULE_VERSION = "3.3.1";
     public static final int DEFAULT_WORKERS = 1;
     public static final long DEFAULT_MAX_WAIT_TIME = 120000L;
     private final String domain;
 
-    public DomainConnection(final Connection connection, final String domain) {
+    public DomainConnection(final Connection connection, final String domain)
+    {
         super(connection.getUrl(), connection.getUsername(), connection.getPassword());
 
-        if (domain == null) {
+        if (domain == null)
+        {
             throw new IllegalArgumentException("null domain");
         }
 
         this.domain = domain;
     }
 
-    public final String getDomain() {
-        return this.domain;
-    }
-
-    protected final Application getCloudHubApplication() {
-        ClientResponse response = createApplicationBuilder(getDomain()).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-        handleErrors(response);
-        return response.getEntity(Application.class);
-    }
-
-    protected final boolean isCloudHubApplicationCreated(final String domain) {
-        try {
-            getCloudHubApplication();
-            return true;
-        } catch (UniformInterfaceException e) {
-            return false;
-        }
+    /**
+     * Returns true if the domain is available for creating.
+     *
+     * @return
+     */
+    public final boolean available()
+    {
+        ClientResponse clientResponse = createBuilder("applications/available/" + domain).head();
+        return clientResponse.getStatus() == 404;
     }
 
     /**
-     * @param domain
-     * @throws DeployableException if iON application does not exist
+     * Returns the Status of the application
+     *
+     * @return The status of the given application.
      */
-    protected final void ensureCloudHubApplicationExists(final String domain) {
-        if (!isCloudHubApplicationCreated(domain)) {
-            throw new RuntimeException("CloudHub Application <"+domain+"> does not exit on <"+getUrl()+">");
+    public final Application.Status status()
+    {
+        ClientResponse response = createApplicationBuilder(domain + "/status").get(ClientResponse.class);
+        handleErrors(response);
+        return Application.Status.valueOf(response.getEntity(String.class));
+    }
+
+
+    public final String getDomain()
+    {
+        return this.domain;
+    }
+
+
+    /**
+     * @param domain
+     * @throws RuntimeException if iON application does not exist
+     */
+    protected final void ensureCloudHubApplicationExists(final String domain)
+    {
+        if (available())
+        {
+            throw new RuntimeException("CloudHub Application <" + domain + "> does not exit on <" + getUrl() + ">");
         }
     }
 
-    public final void update(final ApplicationUpdateInfo application) {
+    public final void update(final ApplicationUpdateInfo application)
+    {
         final ClientResponse response = createApplicationBuilder(domain).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class, application);
-        
+
         handleErrors(response);
     }
 
-    public final void deploy(final File file) {
+    public final void deploy(final File file)
+    {
         deploy(file, DomainConnection.DEFAULT_MULE_VERSION, DomainConnection.DEFAULT_WORKERS, DomainConnection.DEFAULT_MAX_WAIT_TIME, Collections.<String, String>emptyMap());
+    }
+
+    public final void deploy(final File file, ApplicationUpdateInfo application, int waitForStart)
+    {
+        deploy(file, application.getMuleVersion(), application.getWorkers(), waitForStart, application.getProperties());
     }
 
     /**
@@ -89,13 +111,17 @@ public class DomainConnection extends Connection {
      * @param file
      * @param muleVersion
      * @param workers
-     * @param maxWaitTime 
+     * @param maxWaitTime
      */
-    public final void deploy(final File file, final String muleVersion, final int workers, final long maxWaitTime, final Map<String, String> properties) {
-        try {
+    public final void deploy(final File file, final String muleVersion, final int workers, final long maxWaitTime, final Map<String, String> properties)
+    {
+        try
+        {
             this.deployFromStream(new FileInputStream(file), file.getName(), muleVersion, workers, maxWaitTime, properties);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("File does not exist",e);
+        }
+        catch (FileNotFoundException e)
+        {
+            throw new RuntimeException("File does not exist", e);
         }
     }
 
@@ -107,76 +133,90 @@ public class DomainConnection extends Connection {
      * @param workers
      * @param maxWaitTime
      */
-    public final void deploy(final InputStream file, final String muleVersion, final int workers, final long maxWaitTime, final Map<String, String> properties) {
-        this.deployFromStream(file, getDomain() + ".zip", muleVersion, workers, maxWaitTime,properties);
+    public final void deploy(final InputStream file, final String muleVersion, final int workers, final long maxWaitTime, final Map<String, String> properties)
+    {
+        this.deployFromStream(file, getDomain() + ".zip", muleVersion, workers, maxWaitTime, properties);
     }
 
-    private final void deployFromStream(final InputStream file, String fileName, final String muleVersion, final int workers, final long maxWaitTime, final Map<String, String> properties) {
+    private final void deployFromStream(final InputStream file, String fileName, final String muleVersion, final int workers, final long maxWaitTime, final Map<String, String> properties)
+    {
         ensureCloudHubApplicationExists(getDomain());
 
-        final Application application = getCloudHubApplication();
+        final Application application = get();
         ApplicationUpdateInfo appUdateInfo = new ApplicationUpdateInfo(application);
 
-        if (!application.getSupportedVersions().contains(muleVersion)) {
-            throw new IllegalArgumentException("Requested mule version <"+muleVersion+"> is not one of supported versions <"+application.getSupportedVersions()+">");
+        if (!application.getSupportedVersions().contains(muleVersion))
+        {
+            throw new IllegalArgumentException("Requested mule version <" + muleVersion + "> is not one of supported versions <" + application.getSupportedVersions() + ">");
         }
-        if (workers > application.getRemainingWorkerCount()) {
-            throw new IllegalArgumentException("Requested <"+workers+"> workers but only <"+application.getRemainingWorkerCount()+"> are remaining");
+        if (workers > application.getRemainingWorkerCount())
+        {
+            throw new IllegalArgumentException("Requested <" + workers + "> workers but only <" + application.getRemainingWorkerCount() + "> are remaining");
         }
-        switch (application.getStatus()) {
+        switch (application.getStatus())
+        {
             case STARTED:
             case UNDEPLOYED:
             case DEPLOY_FAILED:
                 //Update MetaData
                 boolean updated = false;
-                if (workers != application.getWorkers()) {
+                if (workers != application.getWorkers())
+                {
                     appUdateInfo.setWorkers(workers);
                     updated = true;
                 }
-                if (!muleVersion.equals(application.getMuleVersion())) {
+                if (!muleVersion.equals(application.getMuleVersion()))
+                {
                     appUdateInfo.setMuleVersion(muleVersion);
                     updated = true;
                 }
-                if (!fileName.equals(application.getFilename())) {
+                if (!fileName.equals(application.getFilename()))
+                {
                     appUdateInfo.setFilename(fileName);
                     updated = true;
                 }
-                if (properties != null && !properties.equals(application.getProperties())) {
+                if (properties != null && !properties.equals(application.getProperties()))
+                {
                     appUdateInfo.setProperties(properties);
                     updated = true;
                 }
 
-                if (updated) {
+                if (updated)
+                {
                     update(appUdateInfo);
                 }
 
                 //Push new app
 
-                ClientResponse response = createApplicationBuilder(getDomain()+"/deploy").type(MediaType.APPLICATION_OCTET_STREAM_TYPE).post(ClientResponse.class, file);
+                ClientResponse response = createApplicationBuilder(getDomain() + "/deploy").type(MediaType.APPLICATION_OCTET_STREAM_TYPE).post(ClientResponse.class, file);
                 handleErrors(response);
 
                 break;
             case DEPLOYING:
                 throw new IllegalStateException("Another deployment is in progress");
             default:
-                throw new IllegalStateException("Unhandled status <"+application.getStatus()+">");
+                throw new IllegalStateException("Unhandled status <" + application.getStatus() + ">");
         }
 
         waitForStart(maxWaitTime);
     }
-    
 
-    private void waitForStart(final long maxWaitTime) {
-        if (maxWaitTime == 0) {
+
+    private void waitForStart(final long maxWaitTime)
+    {
+        if (maxWaitTime == 0)
+        {
             return;
         }
-        
+
         final long before = System.currentTimeMillis();
-        while (System.currentTimeMillis() - before < maxWaitTime) {
-            final Application latestApplication = getCloudHubApplication();
+        while (System.currentTimeMillis() - before < maxWaitTime)
+        {
+            final Application latestApplication = get();
             //If application is already deployed rely on deploymentUpdateStatus
             final Application.Status status = latestApplication.getDeploymentUpdateStatus() != null ? latestApplication.getDeploymentUpdateStatus() : latestApplication.getStatus();
-            switch (status) {
+            switch (status)
+            {
                 case DEPLOY_FAILED:
                     //TODO extract error message
                     throw new RuntimeException("Application " + domain + " failed to start.");
@@ -184,45 +224,51 @@ public class DomainConnection extends Connection {
                     return;
             }
 
-            try {
+            try
+            {
                 Thread.sleep(1000L);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e)
+            {
                 //Quit loop when interrupted
                 break;
             }
         }
-        throw new RuntimeException("Waited on <"+getDomain()+"> deployment for <"+maxWaitTime+"> ms");
+        throw new RuntimeException("Waited on <" + getDomain() + "> deployment for <" + maxWaitTime + "> ms");
     }
 
-    public final void stop() {
+    public final void stop()
+    {
         ClientResponse response = createApplicationBuilder(domain + "/status/").type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.stop));
         handleErrors(response);
     }
-    
 
-    public final void start(Long maxWaitTime) {
+
+    public final void start(Long maxWaitTime)
+    {
         ClientResponse response = createApplicationBuilder(domain + "/status/").type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, new ApplicationStatusChange(ApplicationStatus.start));
         handleErrors(response);
-        
+
         waitForStart(maxWaitTime);
     }
 
-    public void delete() {
+    public void delete()
+    {
         ClientResponse response = createApplicationBuilder(domain).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
         handleErrors(response);
     }
 
-    protected final WebResource.Builder createApplicationBuilder(final String path) {
-    	return createBuilder("applications/" + path);
-        
+    protected final WebResource.Builder createApplicationBuilder(final String path)
+    {
+        return createBuilder("applications/" + path);
     }
 
-    public Application get() {
-        ClientResponse response = createApplicationBuilder(domain).get(ClientResponse.class);
+    public Application get()
+    {
+        ClientResponse response = createApplicationBuilder(domain).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
         handleErrors(response);
-        
         return response.getEntity(Application.class);
     }
-    
+
 
 }

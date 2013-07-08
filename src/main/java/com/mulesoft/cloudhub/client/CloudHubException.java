@@ -9,11 +9,13 @@
  */
 package com.mulesoft.cloudhub.client;
 
-public class CloudHubException extends RuntimeException {
+public class CloudHubException extends RuntimeException
+{
 
-	private static final long serialVersionUID = -3393913775158395796L;
+    private static final long serialVersionUID = -3393913775158395796L;
 
-	public CloudHubException(String message) {
+    public CloudHubException(String message)
+    {
         super(message);
     }
 

@@ -36,6 +36,13 @@ public interface CloudhubConnection {
 
 
     /**
+     * Returns the Account information of the logged user
+     * @return The account information.
+     */
+    Account getAccount();
+
+
+    /**
      * Use {@link #create(Notification)} instead
      */
     @Deprecated
@@ -108,72 +115,72 @@ public interface CloudhubConnection {
      * </p>
      */
     void dismissAllNotifications();
-    
+
     /**
      * <p>
      * 	Lists tenants for a given domain
      * </p>
-     * 
+     *
      * @param domain the domain owning the tenants
      * @param limit The maximum number of results to return by default. Maximum of 100.
      * @param offset The offset to start searching at
-     * @param query The company name, contact name, and email of the tenant to search form. Performs a case insensitive match to any part of the tenant name. 
-     * @return an instance of {@link com.mulesoft.cloudhub.client.TenantResults}
+     * @param query The company name, contact name, and email of the tenant to search form. Performs a case insensitive match to any part of the tenant name.
+     * @return an instance of {@link TenantResults}
      */
     public TenantResults listTenants(String domain, Integer limit, Integer offset, String query);
-    
+
     /**
      * <p>
      * 	Returns an specific tenant
      * </p>
-     * 
+     *
      * @param domain the domain owning the tenants
      * @param tenantId the id of the tenant you want
-     * @return an instance of {@link com.mulesoft.cloudhub.client.Tenant}
+     * @return an instance of {@link Tenant}
      */
     public Tenant getTenant(String domain, String tenantId);
-    
+
     /**
      * <p>
      * 	Creates a tenant
      * </p>
-     * 
-     * @param tenant an instance of {@link com.mulesoft.cloudhub.client.Tenant} representing the tenant
+     *
+     * @param tenant an instance of {@link Tenant} representing the tenant
      * @param domain the domain that will own the tenant
-     * @return an instance of {@link com.mulesoft.cloudhub.client.Tenant} carrying the state of the newly created tenant
+     * @return an instance of {@link Tenant} carrying the state of the newly created tenant
      */
     public Tenant create(Tenant tenant, String domain);
-    
+
     /**
      * <p>
      * 	Updates a tenant
      * </p>
-     * 
-     * @param tenant an instance of {@link com.mulesoft.cloudhub.client.Tenant} with the tenant's new state
+     *
+     * @param tenant an instance of {@link Tenant} with the tenant's new state
      * @param domain the domain that will own the tenant
-     * @return an instance of {@link com.mulesoft.cloudhub.client.Tenant} carrying the tenant's updated state
+     * @return an instance of {@link Tenant} carrying the tenant's updated state
      */
     public Tenant update(Tenant tenant, String domain);
-    
+
     /**
      * <p>
      * 	Deletes a given tenant
      * </p>
-     * 
+     *
      * @param tenantId the id of the tenant to be deleted
      * @param domain the domain that owns the tenant to be deleted
      */
     public void delete(String tenantId, String domain);
-    
+
     /**
      * <p>
      * 	Deletes the tenants matching one of many given ids
      * </p>
-     * 
+     *
      * @param domain the domain you want to clear of tenants
      * @param tenantIds a list with tenant ids to be deleted
      */
     public void deleteTenants(String domain, List<String> tenantIds);
-    
-    
+
+
 }

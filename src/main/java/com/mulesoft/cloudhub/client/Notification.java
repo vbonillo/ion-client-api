@@ -12,8 +12,11 @@ package com.mulesoft.cloudhub.client;
 import java.util.Date;
 import java.util.Map;
 
-public class Notification {
-    public enum Priority {
+public class Notification
+{
+
+    public enum Priority
+    {
         INFO, ERROR, WARN
     }
 
@@ -30,99 +33,142 @@ public class Notification {
     private String transactionId;
     private Map<String, String> customProperties;
 
-    public String getId() {
+    public String getId()
+    {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(String id)
+    {
         this.id = id;
     }
 
-    public String getMessage() {
+    public String getMessage()
+    {
         return message;
     }
 
-    public void setMessage(String message) {
+    public void setMessage(String message)
+    {
         this.message = message;
     }
 
-    public String getDomain() {
+    public String getDomain()
+    {
         return domain;
     }
 
-    public void setDomain(String domain) {
+    public void setDomain(String domain)
+    {
         this.domain = domain;
     }
 
-    public Priority getPriority() {
+    public Priority getPriority()
+    {
         return priority;
     }
 
-    public void setPriority(Priority priority) {
+    public void setPriority(Priority priority)
+    {
         this.priority = priority;
     }
 
-    public Date getCreatedAt() {
+    public Date getCreatedAt()
+    {
         return createdAt;
     }
 
-    public void setCreatedAt(Date createdAt) {
+    public void setCreatedAt(Date createdAt)
+    {
         this.createdAt = createdAt;
     }
 
-    public Date getDismissedOn() {
+    public Date getDismissedOn()
+    {
         return dismissedOn;
     }
 
-    public void setDismissedOn(Date dismissedOn) {
+    public void setDismissedOn(Date dismissedOn)
+    {
         this.dismissedOn = dismissedOn;
     }
 
-    public String getHref() {
+    public String getHref()
+    {
         return href;
     }
 
-    public void setHref(String href) {
+    public void setHref(String href)
+    {
         this.href = href;
     }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getUsername()
+    {
+        return username;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public void setUsername(String username)
+    {
+        this.username = username;
+    }
 
-	public Date getReadOn() {
-		return readOn;
-	}
+    public Date getReadOn()
+    {
+        return readOn;
+    }
 
-	public void setReadOn(Date readOn) {
-		this.readOn = readOn;
-	}
+    public void setReadOn(Date readOn)
+    {
+        this.readOn = readOn;
+    }
 
-	public Map<String, String> getCustomProperties() {
-		return customProperties;
-	}
+    public Map<String, String> getCustomProperties()
+    {
+        return customProperties;
+    }
 
-	public void setCustomProperties(Map<String, String> customProperties) {
-		this.customProperties = customProperties;
-	}
+    public void setCustomProperties(Map<String, String> customProperties)
+    {
+        this.customProperties = customProperties;
+    }
 
-    public String getTenantId() {
+    public String getTenantId()
+    {
         return tenantId;
     }
 
-    public void setTenantId(String tenantId) {
+    public void setTenantId(String tenantId)
+    {
         this.tenantId = tenantId;
     }
 
-    public String getTransactionId() {
+    public String getTransactionId()
+    {
         return transactionId;
     }
 
-    public void setTransactionId(String transactionId) {
+    public void setTransactionId(String transactionId)
+    {
         this.transactionId = transactionId;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "Notification{" +
+               "id='" + id + '\'' +
+               ", message='" + message + '\'' +
+               ", domain='" + domain + '\'' +
+               ", priority=" + priority +
+               ", createdAt=" + createdAt +
+               ", dismissedOn=" + dismissedOn +
+               ", href='" + href + '\'' +
+               ", username='" + username + '\'' +
+               ", readOn=" + readOn +
+               ", tenantId='" + tenantId + '\'' +
+               ", transactionId='" + transactionId + '\'' +
+               ", customProperties=" + customProperties +
+               '}';
     }
 }

@@ -10,6 +10,17 @@
 
 package com.mulesoft.cloudhub.client;
 
+import com.mulesoft.cloudhub.client.Notification.Priority;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.WebResource.Builder;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.client.filter.LoggingFilter;
+import com.sun.jersey.core.util.Base64;
+
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
@@ -23,67 +34,83 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mulesoft.cloudhub.client.Notification.Priority;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.WebResource.Builder;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.client.filter.LoggingFilter;
-import com.sun.jersey.core.util.Base64;
-
 /**
  * Base class for CloudHub interaction.
  */
-public class Connection implements CloudhubConnection {
+public class Connection implements CloudhubConnection
+{
+
     private Logger logger = LoggerFactory.getLogger(Connection.class);
-    
+
     public static final String DEFAULT_URL = "https://cloudhub.io/";
     private final Client client;
     private final String url;
     private final String username;
     private final String password;
     private String apiToken;
-    
-    public Connection(final String url, final String username, final String password) {
-        this(url, username, password, false);
+
+
+    public Connection(final String url, final String username, final String password, final String environment)
+    {
+        this(url, username, password, environment, false);
     }
-    
-    public Connection(final String url, final String username, final String password, boolean debug) {
-        if (url == null) {
+
+    public Connection(final String url, final String username, final String password)
+    {
+        this(url, username, password, null, false);
+    }
+
+    public Connection(final String url, final String username, final String password, boolean debug)
+    {
+        this(url, username, password, null, debug);
+    }
+
+    public Connection(final String url, final String username, final String password, String environment, boolean debug)
+    {
+        if (url == null)
+        {
             throw new IllegalArgumentException("null url");
         }
-        
-        if (username == null || "".equals(username)) {
+
+        if (username == null || "".equals(username))
+        {
             // only use the apiToken if username isn't set
             apiToken = System.getProperty("cloudhub.api.token");
-            
-            if (apiToken == null) {
-            	apiToken = System.getProperty("ion.api.token");
+
+            if (apiToken == null)
+            {
+                apiToken = System.getProperty("ion.api.token");
             }
             logger.debug("Using CloudHub token authentication.");
-        } else {
+        }
+        else
+        {
             logger.debug("Using CloudHub username/password authentication because the username is set.");
         }
-        
-        if (apiToken == null) {
-            if (username == null) {
+
+        if (apiToken == null)
+        {
+            if (username == null)
+            {
                 throw new IllegalArgumentException("null username");
             }
-            if (password == null) {
+            if (password == null)
+            {
                 throw new IllegalArgumentException("null password");
             }
         }
 
         //TODO add URL validation
-        if (!url.endsWith("/")) { 
+        if (!url.endsWith("/"))
+        {
             this.url = url + "/";
-        } else {
+        }
+        else
+        {
             this.url = url;
         }
-        this.username = username;
+
+        this.username = environment != null ? username + "@" + environment : username;
         this.password = password;
 
         //Ensure we have all required parameters
@@ -94,87 +121,128 @@ public class Connection implements CloudhubConnection {
         JacksonJsonProvider jsonProvider = new JacksonJsonProvider(mapper);
         clientConfig.getSingletons().add(jsonProvider);
         this.client = Client.create(clientConfig);
-        
-        if (debug) {
+
+        if (debug)
+        {
             this.client.addFilter(new LoggingFilter());
         }
     }
 
-    protected final String getUrl() {
+    protected final String getUrl()
+    {
         return this.url;
     }
 
-    protected final String getUsername() {
+    protected final String getUsername()
+    {
         return this.username;
     }
 
-    protected final String getPassword() {
+    protected final String getPassword()
+    {
         return this.password;
     }
 
 
-    protected final String getAPIURL() {
-        return this.url+"api/";
+    protected final String getAPIURL()
+    {
+        return this.url + "api/";
     }
 
-    protected Builder createBuilder(final String path) {
+    protected Builder createBuilder(final String path)
+    {
         WebResource resource = createResource(path);
-        
+
         return authorizeResource(resource);
     }
 
-    private Builder authorizeResource(WebResource pathResource) {
-        if (apiToken == null) {
-            return pathResource.header(HttpHeaders.AUTHORIZATION, "Basic "+ new String(Base64.encode(this.username+":"+this.password), Charset.forName("ASCII")));
-        } else {
+    private Builder authorizeResource(WebResource pathResource)
+    {
+        if (apiToken == null)
+        {
+            return pathResource.header(HttpHeaders.AUTHORIZATION, "Basic " + new String(Base64.encode(this.username + ":" + this.password), Charset.forName("ASCII")));
+        }
+        else
+        {
             return pathResource.header("X-ION-Authenticate", apiToken);
         }
     }
 
-    private WebResource createResource(final String path) {
+    private WebResource createResource(final String path)
+    {
         return this.client.resource(getAPIURL()).path(path);
     }
 
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final DomainConnection on(final String domain) {
+    public final DomainConnection on(final String domain)
+    {
         return new DomainConnection(this, domain);
     }
 
+    public final Application createApplication(Application application)
+    {
+        ClientResponse clientResponse = createBuilder("applications").type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, application);
+        handleErrors(clientResponse);
+        return clientResponse.getEntity(Application.class);
+    }
+
 
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final boolean test() {
-        try {
+    public final boolean test()
+    {
+        try
+        {
             createBuilder("applications/").get(Object.class);
             return true;
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             return false;
         }
-        
+
+    }
+
+    public List<String> getSupportedMuleVersions()
+    {
+        ClientResponse clientResponse = createBuilder("/applications/supportedMuleVersions").get(ClientResponse.class);
+        handleErrors(clientResponse);
+        return clientResponse.getEntity(List.class);
+    }
+
+    public Account getAccount()
+    {
+        ClientResponse clientResponse = createBuilder("account/").get(ClientResponse.class);
+        this.handleErrors(clientResponse);
+        return clientResponse.getEntity(Account.class);
     }
 
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final List<Application> listApplications() {
+    public final List<Application> listApplications()
+    {
         ClientResponse response = createBuilder("applications/").type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
         handleErrors(response);
-        return response.getEntity(new GenericType<List<Application>>(){});
+        return response.getEntity(new GenericType<List<Application>>()
+        {
+        });
     }
 
 
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
     @Deprecated
-    public final Notification createNotification(String text, Priority priority, String domain, Map<String, String> customProperties) {
+    public final Notification createNotification(String text, Priority priority, String domain, Map<String, String> customProperties)
+    {
         Notification notification = new Notification();
         notification.setMessage(text);
         notification.setDomain(domain);
@@ -186,10 +254,11 @@ public class Connection implements CloudhubConnection {
 
 
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final Notification create(Notification notification){
+    public final Notification create(Notification notification)
+    {
 
         ClientResponse response = createBuilder("notifications/")
                 .type(MediaType.APPLICATION_JSON_TYPE)
@@ -208,25 +277,29 @@ public class Connection implements CloudhubConnection {
 
 
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final NotificationResults listNotifications(Integer maxResults, Integer offset, String tenantId) {
+    public final NotificationResults listNotifications(Integer maxResults, Integer offset, String tenantId)
+    {
         WebResource resource = createResource("/notifications");
-        
-        if (maxResults != null) {
+
+        if (maxResults != null)
+        {
             resource.queryParam("maxResults", maxResults.toString());
         }
 
-        if (offset != null) {
+        if (offset != null)
+        {
             resource.queryParam("offset", offset.toString());
         }
 
-        if (tenantId != null ){
+        if (tenantId != null)
+        {
             resource.queryParam("tenantId", tenantId);
         }
 
-      
+
         ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
         handleErrors(response);
         return response.getEntity(NotificationResults.class);
@@ -234,163 +307,193 @@ public class Connection implements CloudhubConnection {
 
 
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final void dismissNotification(String href) {
+    public final void dismissNotification(String href)
+    {
 
-        Builder resource =  authorizeResource(this.client.resource(href));
-        
+        Builder resource = authorizeResource(this.client.resource(href));
+
         ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
         handleErrors(response);
-    };
+    }
+
+    ;
 
 
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final void dismissAllNotifications() {
+    public final void dismissAllNotifications()
+    {
         Builder resource = createBuilder("notifications/");
-        
+
         ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
         handleErrors(response);
-    };
-    
+    }
+
+    ;
+
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final TenantResults listTenants(String domain, Integer limit, Integer offset, String query) {
-    	WebResource resource = this.createResource("applications")
-    								.path(domain)
-    								.path("tenants");
-    	
-    	if (limit != null) {
-    		resource = resource.queryParam("limit", limit.toString());
-    	}
-    	
-    	if (offset != null) {
-    		resource = resource.queryParam("offset", offset.toString());
-    	}
-    	
-    	if (query != null) {
-    		resource = resource.queryParam("query", query);
-    	}
-    								
-    	ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-    	this.handleErrors(response);
-    	
-    	return response.getEntity(TenantResults.class);
+    public final TenantResults listTenants(String domain, Integer limit, Integer offset, String query)
+    {
+        WebResource resource = this.createResource("applications")
+                .path(domain)
+                .path("tenants");
+
+        if (limit != null)
+        {
+            resource = resource.queryParam("limit", limit.toString());
+        }
+
+        if (offset != null)
+        {
+            resource = resource.queryParam("offset", offset.toString());
+        }
+
+        if (query != null)
+        {
+            resource = resource.queryParam("query", query);
+        }
+
+        ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        this.handleErrors(response);
+
+        return response.getEntity(TenantResults.class);
     }
-    
+
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final Tenant getTenant(String domain, String tenantId) {
-    	WebResource resource = this.createResource("applications")
-				.path(domain)
-				.path("tenants")
-				.path(tenantId);
-    	
-    	ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-    	this.handleErrors(response);
-    	
-    	return response.getEntity(Tenant.class);
+    public final Tenant getTenant(String domain, String tenantId)
+    {
+        WebResource resource = this.createResource("applications")
+                .path(domain)
+                .path("tenants")
+                .path(tenantId);
+
+        ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        this.handleErrors(response);
+
+        return response.getEntity(Tenant.class);
     }
-    
+
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final Tenant create(Tenant tenant, String domain) {
-    	WebResource resource = this.createResource("applications")
-				.path(domain)
-				.path("tenants");
-    	
-    	ClientResponse response = authorizeResource(resource).entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class);
-    	this.handleErrors(response);
-    	
-    	return response.getEntity(Tenant.class);
+    public final Tenant create(Tenant tenant, String domain)
+    {
+        WebResource resource = this.createResource("applications")
+                .path(domain)
+                .path("tenants");
+
+        ClientResponse response = authorizeResource(resource).entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class);
+        this.handleErrors(response);
+
+        return response.getEntity(Tenant.class);
     }
-    
+
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final Tenant update(Tenant tenant, String domain) {
-    	WebResource resource = this.createResource("applications")
-				.path(domain)
-				.path("tenants")
-				.path(tenant.getId());
-    	
-    	ClientResponse response = authorizeResource(resource).entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class);
-    	this.handleErrors(response);
-    	
-    	return response.getEntity(Tenant.class);
+    public final Tenant update(Tenant tenant, String domain)
+    {
+        WebResource resource = this.createResource("applications")
+                .path(domain)
+                .path("tenants")
+                .path(tenant.getId());
+
+        ClientResponse response = authorizeResource(resource).entity(tenant).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class);
+        this.handleErrors(response);
+
+        return response.getEntity(Tenant.class);
     }
-    
+
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public final void delete(String tenantId, String domain) {
-    	WebResource resource = this.createResource("applications")
-				.path(domain)
-				.path("tenants")
-				.path(tenantId);
-    	
-    	ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
-    	this.handleErrors(response);
+    public final void delete(String tenantId, String domain)
+    {
+        WebResource resource = this.createResource("applications")
+                .path(domain)
+                .path("tenants")
+                .path(tenantId);
+
+        ClientResponse response = authorizeResource(resource).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
+        this.handleErrors(response);
     }
-    
+
     /**
-     *{@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public void deleteTenants(String domain, List<String> tenantIds) {
-    	if (tenantIds == null || tenantIds.isEmpty()) {
-    		if (logger.isDebugEnabled()) {
-    			logger.warn("tenantIds collection is null or empty. Exiting without doing anything");
-    		}
-    		
-    		return;
-    	}
-    	
-    	WebResource resource = this.createResource("applications")
-				.path(domain)
-				.path("tenants");
-    	
-    	ClientResponse response = authorizeResource(resource).entity(tenantIds).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
-    	this.handleErrors(response);
+    public void deleteTenants(String domain, List<String> tenantIds)
+    {
+        if (tenantIds == null || tenantIds.isEmpty())
+        {
+            if (logger.isDebugEnabled())
+            {
+                logger.warn("tenantIds collection is null or empty. Exiting without doing anything");
+            }
+
+            return;
+        }
+
+        WebResource resource = this.createResource("applications")
+                .path(domain)
+                .path("tenants");
+
+        ClientResponse response = authorizeResource(resource).entity(tenantIds).type(MediaType.APPLICATION_JSON_TYPE).delete(ClientResponse.class);
+        this.handleErrors(response);
     }
-    
-    
-    protected void handleErrors(ClientResponse response) {
-        if (response.getStatus() == 404) {
+
+
+    protected void handleErrors(ClientResponse response)
+    {
+        if (response.getStatus() == 404)
+        {
             throw new CloudHubException("That resource was not found.");
-        } else if (response.getStatus() == 401) {
+        }
+        else if (response.getStatus() == 401)
+        {
             throw new CloudHubException("Invalid username or password.");
-        } else if (response.getStatus() == 403) {
+        }
+        else if (response.getStatus() == 403)
+        {
             throw new CloudHubException("You do not have access to perform that action.");
-        } else if (response.getStatus() >= 400) {
-            if (response.getType() != null && response.getType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-                
-            	@SuppressWarnings("unchecked")
-            	Map<String, String> responseProps = response.getEntity(Map.class);
-            	
-                throw new CloudHubException((String)responseProps.get("message"));
-            } else {
+        }
+        else if (response.getStatus() >= 400)
+        {
+            if (response.getType() != null && response.getType().isCompatible(MediaType.APPLICATION_JSON_TYPE))
+            {
+
+                @SuppressWarnings("unchecked")
+                Map<String, String> responseProps = response.getEntity(Map.class);
+
+                throw new CloudHubException(responseProps.get("message"));
+            }
+            else
+            {
                 String text = response.getEntity(String.class);
                 throw new CloudHubException("Error " + response.getStatus() + ". " + text);
             }
         }
     }
 
-    public static class ObjectMapper extends org.codehaus.jackson.map.ObjectMapper {
+    public static class ObjectMapper extends org.codehaus.jackson.map.ObjectMapper
+    {
 
-        public ObjectMapper() {
+        public ObjectMapper()
+        {
             super();
             getSerializationConfig().setSerializationInclusion(Inclusion.NON_NULL);
         }

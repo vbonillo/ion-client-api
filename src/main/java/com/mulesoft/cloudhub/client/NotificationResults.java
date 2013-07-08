@@ -11,33 +11,50 @@ package com.mulesoft.cloudhub.client;
 
 import java.util.List;
 
-public class NotificationResults {
+public class NotificationResults
+{
+
     private long unreadCount;
     private List<Notification> data;
 
-    public long getTotal() {
-        if (data == null) {
-        	return 0;
+    public long getTotal()
+    {
+        if (data == null)
+        {
+            return 0;
         }
-        else {
-        	return data.size();
+        else
+        {
+            return data.size();
         }
     }
 
-    public List<Notification> getData() {
+    public List<Notification> getData()
+    {
         return data;
     }
 
-    public void setData(List<Notification> notifications) {
+    public void setData(List<Notification> notifications)
+    {
         this.data = notifications;
     }
 
-	public long getUnreadCount() {
-		return unreadCount;
-	}
+    public long getUnreadCount()
+    {
+        return unreadCount;
+    }
 
-	public void setUnreadCount(long unreadCount) {
-		this.unreadCount = unreadCount;
-	}
+    public void setUnreadCount(long unreadCount)
+    {
+        this.unreadCount = unreadCount;
+    }
 
+    @Override
+    public String toString()
+    {
+        return "NotificationResults{" +
+               "unreadCount=" + unreadCount +
+               ", data=" + data +
+               '}';
+    }
 }

@@ -19,66 +19,92 @@ import java.util.Map;
  * @see http://www.mulesoft.org/documentation/display/ION/Get+An+Application
  */
 
-public class ApplicationUpdateInfo {
-	    private String description;
-	    private Integer workers;
-	    private String muleVersion;
-	    private Map<String,String> properties;
-	    private String filename;
+public class ApplicationUpdateInfo
+{
 
-	    public ApplicationUpdateInfo(Application application) {
-	    	 	setDescription(application.getDescription());
-		        setWorkers(application.getWorkers());
-		        setMuleVersion(application.getMuleVersion());
-		        setProperties(application.getProperties());
-		        setFilename(application.getFilename());
-	    }
+    private String description;
+    private Integer workers;
+    private String muleVersion;
+    private Map<String, String> properties;
+    private String filename;
 
-	    public ApplicationUpdateInfo(String p_description, Integer p_workers, String p_muleVersion, Map<String, String> p_properties, String p_filename)  {
-	        setDescription(p_description);
-	        setWorkers(p_workers);
-	        setMuleVersion(p_muleVersion);
-	        setProperties(p_properties);
-	        setFilename(p_filename);
-	    }
+    public ApplicationUpdateInfo(Application application)
+    {
+        setDescription(application.getDescription());
+        setWorkers(application.getWorkers());
+        setMuleVersion(application.getMuleVersion());
+        setProperties(application.getProperties());
+        setFilename(application.getFilename());
+    }
 
-		public String getDescription() {
-			return description;
-		}
+    public ApplicationUpdateInfo(String p_description, Integer p_workers, String p_muleVersion, Map<String, String> p_properties, String p_filename)
+    {
+        setDescription(p_description);
+        setWorkers(p_workers);
+        setMuleVersion(p_muleVersion);
+        setProperties(p_properties);
+        setFilename(p_filename);
+    }
 
-		public void setDescription(String description) {
-			this.description = description;
-		}
+    public String getDescription()
+    {
+        return description;
+    }
 
-		public Integer getWorkers() {
-			return workers;
-		}
+    public void setDescription(String description)
+    {
+        this.description = description;
+    }
 
-		public void setWorkers(Integer workers) {
-			this.workers = workers;
-		}
+    public Integer getWorkers()
+    {
+        return workers;
+    }
 
-		public String getMuleVersion() {
-			return muleVersion;
-		}
+    public void setWorkers(Integer workers)
+    {
+        this.workers = workers;
+    }
 
-		public void setMuleVersion(String muleVersion) {
-			this.muleVersion = muleVersion;
-		}
+    public String getMuleVersion()
+    {
+        return muleVersion;
+    }
 
-		public Map<String,String> getProperties() {
-			return properties;
-		}
+    public void setMuleVersion(String muleVersion)
+    {
+        this.muleVersion = muleVersion;
+    }
 
-		public void setProperties(Map<String,String> properties) {
-			this.properties = properties;
-		}
+    public Map<String, String> getProperties()
+    {
+        return properties;
+    }
 
-		public String getFilename() {
-			return filename;
-		}
+    public void setProperties(Map<String, String> properties)
+    {
+        this.properties = properties;
+    }
 
-		public void setFilename(String filename) {
-			this.filename = filename;
-		}
+    public String getFilename()
+    {
+        return filename;
+    }
+
+    public void setFilename(String filename)
+    {
+        this.filename = filename;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "ApplicationUpdateInfo{" +
+               "description='" + description + '\'' +
+               ", workers=" + workers +
+               ", muleVersion='" + muleVersion + '\'' +
+               ", properties=" + properties +
+               ", filename='" + filename + '\'' +
+               '}';
+    }
 }
