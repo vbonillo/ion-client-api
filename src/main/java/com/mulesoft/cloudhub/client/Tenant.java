@@ -11,11 +11,11 @@ public class Tenant
 
     private String id;
     private String href;
-    private Date created;
-    private String companyName;
-    private String contactName;
-    private String contactEmail;
+    private String name;
+    private String email;
     private boolean enabled;
+    private boolean alertsEnabled;
+    private Date created;
     private Map<String, String> configuration;
 
     public String getId()
@@ -38,6 +38,14 @@ public class Tenant
         this.href = href;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public Date getCreated()
     {
         return created;
@@ -48,34 +56,14 @@ public class Tenant
         this.created = created;
     }
 
-    public String getCompanyName()
+    public String getEmail()
     {
-        return companyName;
+        return email;
     }
 
-    public void setCompanyName(String companyName)
+    public void setEmail(String email)
     {
-        this.companyName = companyName;
-    }
-
-    public String getContactName()
-    {
-        return contactName;
-    }
-
-    public void setContactName(String contactName)
-    {
-        this.contactName = contactName;
-    }
-
-    public String getContactEmail()
-    {
-        return contactEmail;
-    }
-
-    public void setContactEmail(String contactEmail)
-    {
-        this.contactEmail = contactEmail;
+        this.email = email;
     }
 
     public boolean isEnabled()
@@ -86,6 +74,14 @@ public class Tenant
     public void setEnabled(boolean enabled)
     {
         this.enabled = enabled;
+    }
+
+    public boolean isAlertsEnabled() {
+        return alertsEnabled;
+    }
+
+    public void setAlertsEnabled(boolean alertsEnabled) {
+        this.alertsEnabled = alertsEnabled;
     }
 
     public Map<String, String> getConfiguration()
@@ -102,14 +98,14 @@ public class Tenant
     public String toString()
     {
         return "Tenant{" +
-               "id='" + id + '\'' +
-               ", href='" + href + '\'' +
-               ", created=" + created +
-               ", companyName='" + companyName + '\'' +
-               ", contactName='" + contactName + '\'' +
-               ", contactEmail='" + contactEmail + '\'' +
-               ", enabled=" + enabled +
-               ", configuration=" + configuration +
+               "id='" + getId() + '\'' +
+               ", href='" + getHref() + '\'' +
+               ", name='" + getName() + '\'' +
+               ", email='" + getEmail() + '\'' +
+               ", created=" + getCreated() +
+               ", enabled=" + isEnabled() +
+               ", alertsEnabled=" + isAlertsEnabled() +
+               ", configuration=" + getConfiguration() +
                '}';
     }
 }

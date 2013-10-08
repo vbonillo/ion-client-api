@@ -156,7 +156,7 @@ public class Connection implements CloudhubConnection
         return authorizeResource(resource);
     }
 
-    private Builder authorizeResource(WebResource pathResource)
+    protected Builder authorizeResource(WebResource pathResource)
     {
         if (apiToken == null)
         {
@@ -168,7 +168,7 @@ public class Connection implements CloudhubConnection
         }
     }
 
-    private WebResource createResource(final String path)
+    protected WebResource createResource(final String path)
     {
         return this.client.resource(getAPIURL()).path(path);
     }
